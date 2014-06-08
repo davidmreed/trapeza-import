@@ -80,14 +80,19 @@ def step_one():
     display_diff = "display_diff" in request.form 
     include_unmatched_records = "include_unmatched_records" in request.form 
     output_only_modified_entries = "output_only_modified_entries" in request.form 
+    include_re_new_address_flag = "include_re_new_address_flag" in request.form
     
     # Perform the comparison.
     results = group_results(profile.compare_sources(master, incoming, cutoff))
     
     # Save the details of the operation
-    operation = {   "master": master, "incoming": incoming, "profile": profile, "primary_key": primary_key, "results": results,
-                    "cutoff": cutoff, "display_diff": display_diff, "include_unmatched_records": include_unmatched_records, 
-                    "output_only_modified_entries": output_only_modified_entries }
+    operation = {   "master": master, "incoming": incoming, "profile": profile, 
+                    "primary_key": primary_key, "results": results,
+                    "cutoff": cutoff, 
+                    "display_diff": display_diff, 
+                    "include_unmatched_records": include_unmatched_records, 
+                    "output_only_modified_entries": output_only_modified_entries,
+                    "include_re_new_address_flag": include_re_new_address_flag }
 
     outfile = tempfile.NamedTemporaryFile(delete=False)
     session["file"] = outfile.name
@@ -103,7 +108,8 @@ def step_one():
                            master_headers=master.headers(),
                            flatten_record=flatten_record,
                            get_identifier=get_identifier,
-                           display_diff=display_diff)
+                           display_diff=display_diff,
+                           include_re_new_address_flag=include_re_new_address_flag)
 
 
 @app.route("/dl", methods=["POST"])
@@ -119,6 +125,10 @@ def step_two():
     output = trapeza.Source(operation["incoming"].headers())
     output.add_column(primary_key)
     
+    if operation["include_re_new_address_flag"]:
+        if "New Address?" not in output.headers():
+            output.add_column("New Address?")
+    
     for (original_line, matches) in operation["results"]:
         
         master_id = request.form.get(get_identifier('select', original_line))
@@ -126,28 +136,32 @@ def step_two():
         if master_id or operation["include_unmatched_records"]:
             out_record = trapeza.Record(matches[0].incoming.values)
             out_record.values[primary_key] = master_id or ""
+            modified = False
 			            
             for key in out_record.values:
                 if key != primary_key:
                     value = request.form.get(get_identifier("select", original_line, master_id, key))
-                    #raise Exception("{}".format(request.form))
+
                     if value == "MASTER":
                         if not operation["output_only_modified_entries"]:
-                            for match in matches:
-                                if match.master.record_id() == master_id:
-                                    out_record.values[key] = match.master.values[header_map[key]]
-                                    break
+                            out_record.values[key] = operation["master"].get_record_with_id(master_id).values[header_map[key]]
                         else:
                             out_record.values[key] = ""
                     elif value == "USER":
                         user_val = request.form.get(get_identifier("userentrybox", original_line, master_id, key))
                         if value is not None and len(value) > 0:
                             out_record.values[key] = user_val
+                            modified = True
                     elif value == "INCOMING" or value == "" or value is None:
                         # If the user made no selection, assume that we're to retain the incoming data.
+                        modified = True
                         pass
                     else:
                         raise Exception("Invalid form data.")
+            
+            if operation["include_re_new_address_flag"]:
+                new_address = get_identifier('newaddressbox', original_line) in request.form
+                out_record.values["New Address?"] = "TRUE" if modified and new_address else "FALSE"
 
             output.add_record(out_record)
             

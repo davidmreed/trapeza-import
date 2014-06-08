@@ -29,6 +29,7 @@ Master: <input type="file" name="master"/><br />
 Primary key: <input type="text" name="primary_key" /><br />
 Incoming: <input type="file" name="incoming" /><br />
 Profile: <input type="file" name="profile" /><br />
+Match score cutoff: <input type="number" name="cutoff" value="0"/><br /><br />
 </fieldset>
 
 <fieldset>
@@ -36,7 +37,7 @@ Profile: <input type="file" name="profile" /><br />
 <input type="checkbox" name="display_diff" checked="checked">Display line-by-line comparison for matches</input><br />
 <input type="checkbox" name="include_unmatched_records" checked="checked">Include unmatched records in output</input><br />
 <input type="checkbox" name="output_only_modified_entries">Output only values that differ from the master for each record</input><br />
-Match score cutoff: <input type="number" name="cutoff" value="0"/><br /><br />
+<input type="checkbox" name="include_re_new_address_flag">Include a New Address flag for Raiser's Edge.</input><br />
 </fieldset>
 <input type="submit" />
 </form>

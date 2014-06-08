@@ -95,7 +95,18 @@ When you click Download, Trapeza will generate a file based on your input with u
                    id="{{ get_identifier('userentrybox',  incoming_line[0], match_record.master.record_id(), key) }}"
                    onchange="$('#{{ get_identifier('userentry', incoming_line[0], match_record.master.record_id(), key) }}').attr('checked', true);"/>
         </input><br />
+
+
 {% endfor %}
+{% if include_re_new_address_flag %}
+<br />        
+        <input type="checkbox" 
+               name="{{ get_identifier('newaddressbox', incoming_line[0]) }}"
+               id="{{ get_identifier('newaddressbox', incoming_line[0]) }}">
+            Mark as a new address
+        </input>
+        
+{% endif %}
 
     </td>
 </tr>
