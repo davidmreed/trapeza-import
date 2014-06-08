@@ -44,7 +44,7 @@ When you click Download, Trapeza will generate a file based on your input with u
 
 <tr>
     <td>
-        <input type="radio" name="{{ incoming_line[0] }}" class="select{{ incoming_line[0] }}" id="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}" value="{{ match_record.master.record_id() }}">
+        <input type="radio" name="{{ incoming_line[0] }}" class="select{{ incoming_line[0] }}" id="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}" value="{{ match_record.master.record_id() }}" onclick="$('.detail{{ incoming_line[0] }}').hide(); $('#detail{{ incoming_line[0] }}\\.{{ match_record.master.record_id() }}').show();">
         {{ match_record.score|round(1) }}
         </input>
     </td>
@@ -54,7 +54,7 @@ When you click Download, Trapeza will generate a file based on your input with u
     
 {% if display_diff %}
 
-<tr class="detail{{ incoming_line[0] }}" id="detail{{ incoming_line[0] }}.{{ match_record.master.record_id() }}">
+<tr hidden="hidden" class="detail{{ incoming_line[0] }}" id="detail{{ incoming_line[0] }}.{{ match_record.master.record_id() }}">
     <td>
     </td>
     <td>
@@ -71,7 +71,7 @@ When you click Download, Trapeza will generate a file based on your input with u
 
         <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="INCOMING">{{ match_record.incoming.values[key] }} <em>(incoming)</em></input><br />
         <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="USER" id="userentry{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}">
-            <input type="text" name="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" id="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" />
+            <input type="text" name="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" id="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" onchange="$('#userentry{{ incoming_line[0] }}\\.{{ match_record.master.record_id() }}\\.{{ key }}').attr('checked', true);"/>
         </input><br />
 {% endfor %}
 
