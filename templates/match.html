@@ -1,0 +1,98 @@
+<!--
+   match.html
+   
+   trapeza
+   
+   Copyright 2014 David Reed <david@ktema.org>
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Trapeza: Select Matches</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.22" />
+</head>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<body>
+<h1>Select Matches</h1>
+
+<p>For each incoming record, please select a master record to match against. 
+When you click Download, Trapeza will generate a file based on your input with unique identifiers of your chosen matches inserted.</p> 
+
+<form action="{{ url_for('step_two') }}" method="POST">
+    
+{% for incoming_line in results %}
+
+<h2>Incoming record {{ incoming_line[0] }}: {{ flatten_record(incoming_line[1][0].incoming, incoming_headers) }}</h2>
+
+<table>
+<tr>
+    <td>
+        <strong>Score</strong>
+    </td>
+    <td>
+        <strong>Match Content</strong>
+    </td>
+</tr>
+
+{% for match_record in incoming_line[1] %}
+
+<tr>
+    <td>
+        <input type="radio" name="{{ incoming_line[0] }}" class="select{{ incoming_line[0] }}" id="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}" value="{{ match_record.master.record_id() }}">
+        {{ match_record.score|round(1) }}
+        </input>
+    </td>
+    <td>
+    {{ flatten_record(match_record.master, master_headers) }}
+    </td>
+    
+{% if display_diff %}
+
+<tr class="detail{{ incoming_line[0] }}" id="detail{{ incoming_line[0] }}.{{ match_record.master.record_id() }}">
+    <td>
+    </td>
+    <td>
+        
+{% for key in match_record.incoming.values %}
+
+        <strong>{{key}}</strong><br /> 
+    
+{% if header_map.get(key) and match_record.master.values.get(header_map.get(key)) %}
+
+        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="MASTER">{{ match_record.master.values[header_map[key]] }} <em>(master)</em></input><br />
+    
+{% endif %}
+
+        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="INCOMING">{{ match_record.incoming.values[key] }} <em>(incoming)</em></input><br />
+        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="USER" id="userentry{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}">
+            <input type="text" name="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" id="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" />
+        </input><br />
+{% endfor %}
+
+    </td>
+</tr>
+
+{% endif %}
+{% endfor %}
+
+<tr>
+    <td>
+        <input type="radio" name="{{ incoming_line[0] }}" checked="checked" value=""></input>
+    </td>
+    <td>
+        <em>Do not match this record</em>
+    </td>
+</tr>
+</table>
+
+{% endfor %}
+
+<input type="submit" />
+</form>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!--
+   index.html
+   
+   trapeza
+   
+   Copyright 2014 David Reed <david@ktema.org>
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>Trapeza: Import</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.22" />
+</head>
+
+<body>
+    
+<p>Please upload your profile, master, and incoming spreadsheets. Enter a points value below which results will not be displayed (a low cutoff will result in large numbers of irrelevant results) and specify the name of the primary key column in the master spreadsheet.</p>
+
+<form action="{{url_for('step_one')}}" method="POST" enctype="multipart/form-data">
+<h2>Data</h2>
+<hr />
+Master: <input type="file" name="master"/><br />
+Primary key: <input type="text" name="primary_key" /><br />
+Incoming: <input type="file" name="incoming" /><br />
+Profile: <input type="file" name="profile" /><br />
+
+<h2>Options</h2>
+<hr />
+<input type="checkbox" name="display_diff" checked="checked">Display line-by-line comparison for matches</input><br />
+<input type="checkbox" name="include_unmatched_records" checked="checked">Include unmatched records in output</input><br />
+<input type="checkbox" name="output_only_modified_entries">Output only values that differ from the master for each record</input><br />
+Cutoff: <input type="number" name="cutoff" value="0"/><br /><br />
+
+<input type="submit" />
+</form>
+	
+</body>
+
+</html>
