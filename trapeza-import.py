@@ -7,7 +7,7 @@
 #  This file is available under the terms of the MIT License.
 #
 
-import trapeza, trapeza.match, tempfile, pickle, cStringIO, os
+import trapeza, trapeza.match, tempfile, pickle, cStringIO, os, hashlib
 from flask import Flask, request, session, make_response, render_template, abort
 from operator import itemgetter, attrgetter
 from itertools import groupby
@@ -26,8 +26,17 @@ from itertools import groupby
 app = Flask(__name__)
 app.secret_key = "THIS_IS_A_TESTING_SECRET_KEY"
 
+# Filters and functions for use within the match template
 def flatten_record(record, headers):
     return "; ".join(["{0}: {1}".format(key, record.values[key]) for key in headers])
+
+def get_identifier(element = "", incoming_line = None, record_id = "", key = ""):
+    if not isinstance(incoming_line, str):
+        line = str(incoming_line)
+    else:
+        line = incoming_line or ""
+        
+    return "{0}{1}".format(element, hashlib.md5(".".join([line, record_id or "", key or ""])).hexdigest())
 
 def generate_header_mapping(profile):
     header_map = {}
@@ -47,11 +56,6 @@ def group_results(results):
         list_results.append((k, sorted(list(g), key=attrgetter("score"), reverse=True)))
     
     return sorted(list_results, key=itemgetter(0))
-
-def run_comparison(master, incoming, profile, cutoff):
-    results = group_results(profile.compare_sources(master, incoming, cutoff))
-    
-    return results
 
 @app.route("/")
 def start():
@@ -73,9 +77,9 @@ def step_one():
     
     # Bring in the parameters. FIXME: will this crash if a non-integer parameter is submitted?
     cutoff = int(request.form["cutoff"]) or 0
-    display_diff = True if "display_diff" in request.form else False
-    include_unmatched_records = True if "include_unmatched_records" in request.form else False
-    output_only_modified_entries = True if "output_only_modified_entries" in request.form else False
+    display_diff = "display_diff" in request.form 
+    include_unmatched_records = "include_unmatched_records" in request.form 
+    output_only_modified_entries = "output_only_modified_entries" in request.form 
     
     # Perform the comparison.
     results = group_results(profile.compare_sources(master, incoming, cutoff))
@@ -98,7 +102,8 @@ def step_one():
                            incoming_headers=incoming.headers(),
                            master_headers=master.headers(),
                            flatten_record=flatten_record,
-                           display_diff=display_diff or True)
+                           get_identifier=get_identifier,
+                           display_diff=display_diff)
 
 
 @app.route("/dl", methods=["POST"])
@@ -116,7 +121,7 @@ def step_two():
     
     for (original_line, matches) in operation["results"]:
         
-        master_id = request.form.get(str(original_line))
+        master_id = request.form.get(get_identifier('select', original_line))
         
         if master_id or operation["include_unmatched_records"]:
             out_record = trapeza.Record(matches[0].incoming.values)
@@ -124,7 +129,8 @@ def step_two():
 			            
             for key in out_record.values:
                 if key != primary_key:
-                    value = request.form.get("select{0}.{1}.{2}".format(original_line, master_id, key))
+                    value = request.form.get(get_identifier("select", original_line, master_id, key))
+                    #raise Exception("{}".format(request.form))
                     if value == "MASTER":
                         if not operation["output_only_modified_entries"]:
                             for match in matches:
@@ -134,7 +140,7 @@ def step_two():
                         else:
                             out_record.values[key] = ""
                     elif value == "USER":
-                        user_val = request.form.get("userentrybox{0}.{1}.{2}".format(original_line, master_id, key))
+                        user_val = request.form.get(get_identifier("userentrybox", original_line, master_id, key))
                         if value is not None and len(value) > 0:
                             out_record.values[key] = user_val
                     elif value == "INCOMING" or value == "" or value is None:

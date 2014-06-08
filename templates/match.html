@@ -44,7 +44,13 @@ When you click Download, Trapeza will generate a file based on your input with u
 
 <tr>
     <td>
-        <input type="radio" name="{{ incoming_line[0] }}" class="select{{ incoming_line[0] }}" id="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}" value="{{ match_record.master.record_id() }}" onclick="$('.detail{{ incoming_line[0] }}').hide(); $('#detail{{ incoming_line[0] }}\\.{{ match_record.master.record_id() }}').show();">
+        <input type="radio" 
+               name="{{ get_identifier('select', incoming_line[0]) }}" 
+               class="{{ get_identifier('select', incoming_line[0]) }}" 
+               id="{{ get_identifier('select', incoming_line[0], match_record.master.record_id()) }}"
+               value="{{ match_record.master.record_id() }}" 
+               onclick="$('.{{ get_identifier('detail', incoming_line[0]) }}').hide(); 
+                        $('#{{ get_identifier('detail', incoming_line[0], match_record.master.record_id()) }}').show();">
         {{ match_record.score|round(1) }}
         </input>
     </td>
@@ -54,7 +60,9 @@ When you click Download, Trapeza will generate a file based on your input with u
     
 {% if display_diff %}
 
-<tr hidden="hidden" class="detail{{ incoming_line[0] }}" id="detail{{ incoming_line[0] }}.{{ match_record.master.record_id() }}">
+<tr hidden="hidden" 
+    class="{{ get_identifier('detail', incoming_line[0]) }}" 
+    id="{{ get_identifier('detail', incoming_line[0], match_record.master.record_id()) }}">
     <td>
     </td>
     <td>
@@ -65,13 +73,27 @@ When you click Download, Trapeza will generate a file based on your input with u
     
 {% if header_map.get(key) and match_record.master.values.get(header_map.get(key)) %}
 
-        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="MASTER">{{ match_record.master.values[header_map[key]] }} <em>(master)</em></input><br />
+        <input type="radio" 
+               name="{{ get_identifier('select', incoming_line[0], match_record.master.record_id(), key) }}" 
+               value="MASTER">
+            {{ match_record.master.values[header_map[key]] }} <em>(master)</em>
+        </input><br />
     
 {% endif %}
 
-        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="INCOMING">{{ match_record.incoming.values[key] }} <em>(incoming)</em></input><br />
-        <input type="radio" name="select{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" value="USER" id="userentry{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}">
-            <input type="text" name="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" id="userentrybox{{ incoming_line[0] }}.{{ match_record.master.record_id() }}.{{ key }}" onchange="$('#userentry{{ incoming_line[0] }}\\.{{ match_record.master.record_id() }}\\.{{ key }}').attr('checked', true);"/>
+        <input type="radio" 
+               name="{{ get_identifier('select', incoming_line[0], match_record.master.record_id(), key) }}" 
+               value="INCOMING">
+            {{ match_record.incoming.values[key] }} <em>(incoming)</em>
+        </input><br />
+        <input type="radio" 
+               name="{{ get_identifier('select', incoming_line[0], match_record.master.record_id(), key) }}" 
+               value="USER" 
+               id="{{ get_identifier('userentry', incoming_line[0], match_record.master.record_id(), key) }}">
+            <input type="text" 
+                   name="{{ get_identifier('userentrybox', incoming_line[0], match_record.master.record_id(), key) }}" 
+                   id="{{ get_identifier('userentrybox',  incoming_line[0], match_record.master.record_id(), key) }}"
+                   onchange="$('#{{ get_identifier('userentry', incoming_line[0], match_record.master.record_id(), key) }}').attr('checked', true);"/>
         </input><br />
 {% endfor %}
 
@@ -83,7 +105,10 @@ When you click Download, Trapeza will generate a file based on your input with u
 
 <tr>
     <td>
-        <input type="radio" name="{{ incoming_line[0] }}" checked="checked" value=""></input>
+        <input type="radio" 
+               name="{{ get_identifier('select', incoming_line[0]) }}" 
+               checked="checked" 
+               value="" />
     </td>
     <td>
         <em>Do not match this record</em>
