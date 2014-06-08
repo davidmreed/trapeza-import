@@ -4,6 +4,7 @@
 #  trapeza-import.py
 #  
 #  Copyright 2013-2014 David Reed <david@ktema.org>
+#  This file is available under the terms of the MIT License.
 #
 
 import trapeza, trapeza.match, tempfile, pickle, cStringIO, os
