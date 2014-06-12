@@ -64,10 +64,10 @@ def start():
 @app.route("/run", methods=["POST"])
 def step_one():
 
-    # Load files. We assume, at present, that the files are CSV format.
-    master = trapeza.load_source(request.files["master"], "csv")
-    incoming = trapeza.load_source(request.files["incoming"], "csv")
-    profile = trapeza.match.Profile(source = trapeza.load_source(request.files["profile"], "csv"))
+    # Load files. 
+    master = trapeza.load_source(request.files["master"], trapeza.get_format(request.files["master"].filename, "csv"))
+    incoming = trapeza.load_source(request.files["incoming"], trapeza.get_format(request.files["incoming"].filename, "csv"))
+    profile = trapeza.match.Profile(source = trapeza.load_source(request.files["profile"], trapeza.get_format(request.files["profile"].filename, "csv")))
     
     # Determine primary key and set in Master. We do not set the primary key on incoming or the output.
     # If the user feels like matching multiple input lines to the same master records, that's fine;
