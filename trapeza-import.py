@@ -28,7 +28,7 @@ app.secret_key = "THIS_IS_A_TESTING_SECRET_KEY"
 
 # Filters and functions for use within the match template
 def flatten_record(record, headers):
-    return "; ".join(["{0}: {1}".format(key, record.values[key]) for key in headers])
+    return u"; ".join([u"{0}: {1}".format(key, record.values[key]) for key in headers])
 
 def get_identifier(element = "", incoming_line = None, record_id = "", key = ""):
     if not isinstance(incoming_line, str):
