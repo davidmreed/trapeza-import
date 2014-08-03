@@ -28,7 +28,7 @@ app.secret_key = "THIS_IS_A_TESTING_SECRET_KEY"
 
 # Filters and functions for use within the match template
 def flatten_record(record, headers):
-    return "; ".join(["{0}: {1}".format(key, record.values[key]) for key in headers])
+    return u"; ".join([u"{0}: {1}".format(key, record.values[key]) for key in headers])
 
 def get_identifier(element = "", incoming_line = None, record_id = "", key = ""):
     if not isinstance(incoming_line, str):
@@ -36,7 +36,7 @@ def get_identifier(element = "", incoming_line = None, record_id = "", key = "")
     else:
         line = incoming_line or ""
         
-    return "{0}{1}".format(element, hashlib.md5(".".join([line, record_id or "", key or ""])).hexdigest())
+    return u"{0}{1}".format(element, hashlib.md5(".".join([line, record_id or "", key or ""])).hexdigest())
 
 def generate_header_mapping(profile):
     header_map = {}
@@ -47,13 +47,13 @@ def generate_header_mapping(profile):
     
     return header_map
 
-def group_results(results): 
+def group_results(results, nresults): 
     list_results = []
     
-    gb = groupby(results, lambda res: res.incoming.input_line)
+    gb = groupby(results, lambda res: res.incoming.input_line())
     
     for (k, g) in gb:
-        list_results.append((k, sorted(list(g), key=attrgetter("score"), reverse=True)))
+        list_results.append((k, sorted(list(g), key=attrgetter("score"), reverse=True)[:nresults]))
     
     return sorted(list_results, key=itemgetter(0))
 
@@ -64,10 +64,20 @@ def start():
 @app.route("/run", methods=["POST"])
 def step_one():
 
-    # Load files. We assume, at present, that the files are CSV format.
-    master = trapeza.load_source(request.files["master"], "csv")
-    incoming = trapeza.load_source(request.files["incoming"], "csv")
-    profile = trapeza.match.Profile(source = trapeza.load_source(request.files["profile"], "csv"))
+    # Load files.
+    master_file = request.files["master"]
+    master_format = trapeza.get_format(master_file.filename, "csv")
+    if master_format == "trapeza":
+        # Master file has been preprocessed
+        processed_master = pickle.load(master_file)
+        master = processed_master.source
+        profile = processed_master.profile
+    else:
+        processed_master = None
+        master = trapeza.load_source(request.files["master"], master_format)
+        profile = trapeza.match.Profile(source = trapeza.load_source(request.files["profile"], trapeza.get_format(request.files["profile"].filename, "csv")))
+
+    incoming = trapeza.load_source(request.files["incoming"], trapeza.get_format(request.files["incoming"].filename, "csv"))
     
     # Determine primary key and set in Master. We do not set the primary key on incoming or the output.
     # If the user feels like matching multiple input lines to the same master records, that's fine;
@@ -77,13 +87,14 @@ def step_one():
     
     # Bring in the parameters. FIXME: will this crash if a non-integer parameter is submitted?
     cutoff = int(request.form["cutoff"]) or 0
+    nresults = int(request.form["nresults"]) or 5
     display_diff = "display_diff" in request.form 
     include_unmatched_records = "include_unmatched_records" in request.form 
     output_only_modified_entries = "output_only_modified_entries" in request.form 
     include_re_new_address_flag = "include_re_new_address_flag" in request.form
     
     # Perform the comparison.
-    results = group_results(profile.compare_sources(master, incoming, cutoff))
+    results = group_results(profile.compare_sources(processed_master or  master, incoming, cutoff), nresults)
     
     # Save the details of the operation
     operation = {   "master": master, "incoming": incoming, "profile": profile, 
@@ -167,9 +178,8 @@ def step_two():
             
     io = cStringIO.StringIO()
     
-    output_function = trapeza.outputs["csv"]
-    output_function(output, io, "csv")
-    
+    trapeza.write_source(output, io, "csv")
+        
     data = io.getvalue()
     io.close()
     
