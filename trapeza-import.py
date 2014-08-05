@@ -140,13 +140,17 @@ def step_two():
         if "New Address?" not in output.headers():
             output.add_column("New Address?")
     
+    matched_records = []
+    
     for (original_line, matches) in operation["results"]:
+        
+        matched_records.append(original_line)
         
         master_id = request.form.get(get_identifier('select', original_line))
         
         if master_id or operation["include_unmatched_records"]:
             out_record = trapeza.Record(matches[0].incoming.values)
-            out_record.values[primary_key] = master_id or ""
+            out_record.values[primary_key] = master_id or u""
             modified = False
 			            
             for key in out_record.values:
@@ -175,6 +179,18 @@ def step_two():
                 out_record.values["New Address?"] = "TRUE" if modified and new_address else "FALSE"
 
             output.add_record(out_record)
+            
+    # If we are outputting unmatched records, we also must collect and output any record which didn't have a match over the cutoff
+    # (which won't appear in the matched list)
+    
+    for record in operation["incoming"].records():
+        if record.input_line() not in matched_records:
+            out_record = trapeza.Record(record.values)
+            out_record.values[primary_key] = u""
+            if operation["include_re_new_address_flag"]:
+                out_record.values["New Address?"] = "FALSE" 
+
+            output.add_record(record)
             
     io = cStringIO.StringIO()
     
