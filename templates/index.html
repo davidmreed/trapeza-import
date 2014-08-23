@@ -20,6 +20,16 @@
 
 <body>
 <h1>Trapeza: Import</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes" style="border: 1px solid red;">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
 <p>Please upload your profile, master, and incoming spreadsheets. Enter a points value below which results will not be displayed (a low cutoff will result in large numbers of irrelevant results) and specify the name of the primary key column in the master spreadsheet.</p>
 
 <form action="{{url_for('step_one')}}" method="POST" enctype="multipart/form-data">
@@ -33,15 +43,45 @@ Display the top <input type="number" name="nresults" value="5"/> results with sc
 </fieldset>
 
 <fieldset>
-<legend>Options</legend>
+<legend>General Options</legend>
 <input type="checkbox" name="display_diff" checked="checked">Display line-by-line comparison for matches</input><br />
 <input type="checkbox" name="include_unmatched_records" checked="checked">Include unmatched records in output</input><br />
 <input type="checkbox" name="output_only_modified_entries">Output only values that differ from the master for each record</input><br />
 <input type="checkbox" name="include_re_new_address_flag">Include a New Address flag for Raiser's Edge.</input><br />
 </fieldset>
+<fieldset>
+<legend>Format Options</legend>
+Input format: <select name="input_format">
+<option value="" selected>Infer from filename</option>
+{% for each_format in input_formats %}
+<option value="{{ each_format }}">{{ each_format }}</option>
+{% endfor %}
+</select>
+Input encoding: <select name="input_encoding">
+{% for encoding in encodings %}
+<option value="{{ encoding[0] }}" {% if encoding[0] == "utf8" %} selected {% endif %}>{{ encoding[1] }}</option>
+{% endfor %}
+</select>
+<br /><br />
+Output format: <select name="output_format">
+{% for each_format in output_formats %}
+<option value="{{ each_format }}" {% if each_format == "csv" %} selected {% endif %}>{{ each_format }}</option>
+{% endfor %}
+</select>
+Output encoding: <select name="output_encoding">
+{% for encoding in encodings %}
+<option value="{{ encoding[0] }}" {% if encoding[0] == "utf8" %} selected {% endif %}>{{ encoding[1] }}</option>
+{% endfor %}
+</select>
+Output line endings: <select name="line_endings">
+<option value="crlf">Windows (Carriage Return-Line Feed)</option>
+<option value="lf" selected>Mac OS X/Unix/Linux (Line Feed)</option>
+<option value="cr">Classic Macintosh (Carriage Return)</option>
+</select>
+<br />
+</fieldset>
+<br />
 <input type="submit" />
 </form>
-	
 </body>
-
 </html>
