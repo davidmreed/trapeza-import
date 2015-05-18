@@ -1,0 +1,10 @@
+body {
+    background-color: gray;
+    font: Verdana, Arial, sans-serif;
+    font-size: 12px;
+}
+
+.record {
+    border: 1px solid black;
+    background-color: white;
+}
