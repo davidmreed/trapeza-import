@@ -53,7 +53,7 @@ def get_identifier(element="", incoming_line=None, record_id="", key=""):
     else:
         line = incoming_line or ""
 
-    return u"{0}{1}".format(element, hashlib.md5(".".join([line, record_id or "", key or ""])).hexdigest())
+    return u"{0}{1}".format(element, hashlib.sha512(".".join([line, record_id or "", key or ""])).hexdigest())
 
 
 def generate_header_mapping(profile):
