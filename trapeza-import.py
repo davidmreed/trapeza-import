@@ -164,22 +164,17 @@ def step_one():
 
         automatches = []
         results = []
-        sys.stderr.write("Autocutoff enabled. Threshold = {}\n".format(autocutoff))
+
         if autocutoff != 0:
             for result in raw_results:
                 # Each result is a (line number, results list) tuple.
-                sys.stderr.write("For input line {}, highest result value = {}\n".format(result[0], result[1][0].score))
                 if result[1][0].score >= autocutoff and \
                     (len(result[1]) == 1 or (len(result[1]) > 1 and result[1][1].score < autocutoff)):
                         # We have exactly one match with a score at or above the cutoff.
                         # Automatically match this record.
-                        sys.stderr.write("Automatching input line {} to record {} with score {}\n".format(
-                             result[0], result[1][0].master.record_id(), result[1][0].score))
                         automatches.append((result[0], result[1][0:1]))
                 else:
                         results.append(result)
-
-            sys.stderr.write("Automatched {} records\n".format(len(automatches)))
         else:
             results = raw_results
 
@@ -303,8 +298,6 @@ def step_two():
         for (original_line, matches) in operation["automatches"]:
             out_record = trapeza.Record(matches[0].incoming.values)
             out_record.values[primary_key] = matches[0].master.record_id()
-            sys.stderr.write("Writing automatched record {} with master ID {}\n"
-                             .format(original_line, matches[0].master.record_id()))
             output.add_record(out_record)
 
         # If we are outputting unmatched records, we also must collect and output any record which didn't have a match
