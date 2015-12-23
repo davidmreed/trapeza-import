@@ -9,13 +9,13 @@
 -->
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
-	<title>Trapeza: Select Matches</title>
-	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-	<meta name="generator" content="Geany 1.22" />
+    <title>Trapeza: Select Matches</title>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <meta name="generator" content="Geany 1.22" />
 </head>
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <body>
@@ -27,6 +27,7 @@ When you click Download, Trapeza will generate a file based on your input with u
 <form action="{{ url_for('step_two') }}" method="POST">
     
 {% for incoming_line in results %}
+<div class="record">
 
 <h2>Incoming record {{ incoming_line[0] }}: {{ flatten_record(incoming_line[1][0].incoming, incoming_headers) }}</h2>
 
@@ -41,7 +42,6 @@ When you click Download, Trapeza will generate a file based on your input with u
 </tr>
 
 {% for match_record in incoming_line[1] %}
-
 <tr>
     <td>
         <input type="radio" 
@@ -126,7 +126,7 @@ When you click Download, Trapeza will generate a file based on your input with u
     </td>
 </tr>
 </table>
-
+</div>
 {% endfor %}
 
 <input type="submit" />

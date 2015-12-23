@@ -55,7 +55,7 @@ def get_identifier(element="", incoming_line=None, record_id="", key=""):
     else:
         line = incoming_line or ""
 
-    return u"{0}{1}".format(element, hashlib.md5(".".join([line, record_id or "", key or ""])).hexdigest())
+    return u"{0}{1}".format(element, hashlib.sha512(".".join([line, record_id or "", key or ""])).hexdigest())
 
 
 def generate_header_mapping(profile):
@@ -69,17 +69,10 @@ def generate_header_mapping(profile):
 
 
 def group_results(results, nresults):
-    #list_results = []
-
     # Group result lines into tuples (line no, results list) by the original input line.
-    #gb = groupby(results, lambda res: res.incoming.input_line())
+    # Built a list whose elements are tuples (line no, result list), where the result
+    # list is sorted by match score and clamped to the best nresults
 
-    #for (k, g) in gb:
-        # Built a list whose elements are tuples (line no, result list), where the result
-        # list is sorted by match score and clamped to the best nresults
-#        list_results.append((k, sorted(list(g), key=attrgetter("score"), reverse=True)[:nresults]))
-
-    # Re-sort the list by input line
     return sorted([(k, sorted(list(g), key=attrgetter("score"), reverse=True)[:nresults])
                    for k, g in groupby(results, lambda res: res.incoming.input_line())],
                   key=itemgetter(0))
@@ -99,8 +92,8 @@ def step_one():
         # Load master sheet or processed master file and profile
         master_file = request.files["master"]
 
-        if "input_format" in request.form and request.form.get(
-                "input_format") in trapeza.formats.available_input_formats():
+        if "input_format" in request.form \
+                and request.form.get("input_format") in trapeza.formats.available_input_formats():
             master_format = request.form.get("input_format")
         else:
             master_format = trapeza.get_format(master_file.filename, "csv")
@@ -118,18 +111,20 @@ def step_one():
         else:
             processed_master = None
             master = trapeza.load_source(request.files["master"], master_format, encoding=input_encoding)
-            profile = trapeza.match.Profile(source=trapeza.load_source(request.files["profile"], trapeza.get_format(
-                request.files["profile"].filename, "csv"), encoding=input_encoding))
+            profile = trapeza.match.Profile(
+                source=trapeza.load_source(request.files["profile"],
+                                           trapeza.get_format(request.files["profile"].filename, "csv"),
+                                           encoding=input_encoding))
 
         # Load incoming file
-        if "input_format" in request.form and request.form.get(
-                "input_format") in trapeza.formats.available_input_formats():
+        if "input_format" in request.form \
+                and request.form.get("input_format") in trapeza.formats.available_input_formats():
             incoming_format = request.form.get("input_format")
         else:
             incoming_format = trapeza.get_format(request.files["incoming"].filename, "csv")
 
         incoming = trapeza.load_source(request.files["incoming"], incoming_format, encoding=input_encoding)
-    except Exception as e:
+    except IOError:
         flash("An error occurred during loading of input files. Please provide files in a format that Trapeza "
               "understands and ensure you choose the correct text encoding.")
         return redirect(url_for("start"))
@@ -140,7 +135,7 @@ def step_one():
     try:
         primary_key = request.form["primary_key"]
         master.set_primary_key(primary_key)
-    except Exception as e:
+    except KeyError:
         flash("One or more master records are missing the specified primary key.")
         return redirect(url_for("start"))
 
@@ -157,7 +152,7 @@ def step_one():
             line_endings = request.form.get("line_endings")
         else:
             line_endings = "lf"
-    except Exception as e:
+    except [KeyError, TypeError]:
         flash("An invalid option was specified.")
         return redirect(url_for("start"))
 
@@ -176,26 +171,26 @@ def step_one():
                 sys.stderr.write("For input line {}, highest result value = {}\n".format(result[0], result[1][0].score))
                 if result[1][0].score >= autocutoff and \
                     (len(result[1]) == 1 or (len(result[1]) > 1 and result[1][1].score < autocutoff)):
-                    # We have exactly one match with a score at or above the cutoff.
-                    # Automatically match this record.
-                    sys.stderr.write("Automatching input line {} to record {} with score {}\n".format(
-                            result[0], result[1][0].master.record_id(), result[1][0].score))
-                    automatches.append((result[0], result[1][0:1]))
+                        # We have exactly one match with a score at or above the cutoff.
+                        # Automatically match this record.
+                        sys.stderr.write("Automatching input line {} to record {} with score {}\n".format(
+                             result[0], result[1][0].master.record_id(), result[1][0].score))
+                        automatches.append((result[0], result[1][0:1]))
                 else:
-                    results.append(result)
+                        results.append(result)
 
             sys.stderr.write("Automatched {} records\n".format(len(automatches)))
         else:
             results = raw_results
 
     except Exception as e:
-        flash("An error occured during matching ({})".format(e))
+        flash("An error occurred during matching ({})".format(e))
         return redirect(url_for("start"))
 
     try:
         # Save the details of the operation
-        if request.form.get("output_format") and request.form.get(
-                "output_format") in trapeza.formats.available_output_formats():
+        if request.form.get("output_format") and \
+           request.form.get("output_format") in trapeza.formats.available_output_formats():
             output_format = request.form.get("output_format")
         else:
             output_format = "csv"
@@ -225,7 +220,7 @@ def step_one():
         pickle.dump(operation, outfile, pickle.HIGHEST_PROTOCOL)
         outfile.close()
     except Exception as e:
-        flash("An error occured while saving output ({})".format(e))
+        flash("An error occurred while saving output ({})".format(e))
         return redirect(url_for("start"))
 
     return render_template("match.html",
@@ -247,8 +242,8 @@ def step_two():
             operation = pickle.load(sess_file)
 
         os.unlink(session["file"])
-    except Exception as e:
-        flash("An error occured while loading processed results.")
+    except IOError:
+        flash("An error occurred while loading processed results.")
         return redirect(url_for("start"))
 
     try:
@@ -308,7 +303,8 @@ def step_two():
         for (original_line, matches) in operation["automatches"]:
             out_record = trapeza.Record(matches[0].incoming.values)
             out_record.values[primary_key] = matches[0].master.record_id()
-            sys.stderr.write("Writing automatched record {} with master ID {}\n".format(original_line, matches[0].master.record_id()))
+            sys.stderr.write("Writing automatched record {} with master ID {}\n"
+                             .format(original_line, matches[0].master.record_id()))
             output.add_record(out_record)
 
         # If we are outputting unmatched records, we also must collect and output any record which didn't have a match
@@ -326,7 +322,7 @@ def step_two():
 
                 output.add_record(record)
     except Exception as e:
-        flash("An error occured while processing matches ({})".format(e))
+        flash("An error occurred while processing matches ({})".format(e))
         return redirect(url_for("start"))
 
     try:
@@ -346,7 +342,7 @@ def step_two():
 
         return response
     except Exception as e:
-        flash("An error occured while writing output ({})".format(e))
+        flash("An error occurred while writing output ({})".format(e))
         return redirect(url_for("start"))
 
 
